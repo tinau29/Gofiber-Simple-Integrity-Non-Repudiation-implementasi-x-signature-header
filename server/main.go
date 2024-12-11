@@ -70,7 +70,7 @@ func verifySignature(publicKey *rsa.PublicKey, stringToSign, signatureBase64 str
 func main() {
 	app := fiber.New()
 
-	publicKeyPath := "files/rsa/public_key.pem"
+	publicKeyPath := "/files/rsa/public_key.pem"
 
 	app.Post("/verify", func(c *fiber.Ctx) error {
 		clientID := c.Get("X-Client-ID")

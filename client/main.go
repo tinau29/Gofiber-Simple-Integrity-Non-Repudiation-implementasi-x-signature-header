@@ -62,7 +62,7 @@ func signString(privateKey *rsa.PrivateKey, stringToSign string) (string, error)
 func main() {
 	app := fiber.New()
 
-	privateKeyPath := "files/rsa/private_key.pem"
+	privateKeyPath := "/files/rsa/private_key.pem"
 
 	clientID := "exampleClientID"
 	timestamp := "2024-12-09T10:00:00Z"
