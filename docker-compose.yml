@@ -1,0 +1,49 @@
+version: '3.9'
+
+volumes:
+  goroot: {}
+  gocache: {}
+  goroot_client: {}
+  gocache_client: {}
+
+networks:
+   signature: {}
+
+services:
+  server:
+    image: golang:1.18-buster
+    working_dir: /project
+    volumes:
+      - goroot:/go
+      - gocache:/.cache/go-build
+      - ./server:/project
+      - ./rsa-private-public-key/public_key.pem:/project/files/rsa/public_key.pem
+    ports:
+      - 3000:3000
+    command:
+      - tail
+      - -f
+      - /etc/hosts
+    networks:
+      signature:
+        aliases:
+          - server
+
+  client:
+    image: golang:1.18-buster
+    working_dir: /project
+    volumes:
+      - goroot_client:/go
+      - gocache_client:/.cache/go-build
+      - ./client:/project
+      - ./rsa-private-public-key/private_key.pem:/project/files/rsa/private_key.pem
+    ports:
+      - 3001:3001
+    command:
+      - tail
+      - -f
+      - /etc/hosts
+    networks:
+      signature:
+        aliases:
+          - client

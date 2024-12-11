@@ -1,0 +1,7 @@
+/*
+!/.gitignore
+!/client/
+!/server/
+!/rsa-private-public-key
+!/docker-compose.yml
+!/README.md
