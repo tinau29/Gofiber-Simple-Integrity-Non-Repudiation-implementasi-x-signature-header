@@ -13,11 +13,39 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 // Fungsi untuk memuat private key dari file dengan path
+// func loadPrivateKeyFromFile(filePath string) (*rsa.PrivateKey, error) {
+// 	// Baca isi file private key
+// 	keyBytes, err := ioutil.ReadFile(filePath)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to read private key file at %s: %w", filePath, err)
+// 	}
+
+// 	// Decode private key dari format PEM
+// 	block, _ := pem.Decode(keyBytes)
+// 	if block == nil || block.Type != "PRIVATE KEY" {
+// 		return nil, errors.New("invalid private key PEM format")
+// 	}
+
+// 	// Parse private key ke objek RSA
+// 	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to parse private key: %w", err)
+// 	}
+
+// 	// Pastikan kunci adalah tipe RSA
+// 	rsaKey, ok := privateKey.(*rsa.PrivateKey)
+// 	if !ok {
+// 		return nil, errors.New("not an RSA private key")
+// 	}
+
+// 	return rsaKey, nil
+// }
 func loadPrivateKeyFromFile(filePath string) (*rsa.PrivateKey, error) {
 	// Baca isi file private key
 	keyBytes, err := ioutil.ReadFile(filePath)
@@ -27,23 +55,17 @@ func loadPrivateKeyFromFile(filePath string) (*rsa.PrivateKey, error) {
 
 	// Decode private key dari format PEM
 	block, _ := pem.Decode(keyBytes)
-	if block == nil || block.Type != "PRIVATE KEY" {
-		return nil, errors.New("invalid private key PEM format")
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, errors.New("invalid RSA private key PEM format")
 	}
 
 	// Parse private key ke objek RSA
-	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
-	// Pastikan kunci adalah tipe RSA
-	rsaKey, ok := privateKey.(*rsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("not an RSA private key")
-	}
-
-	return rsaKey, nil
+	return privateKey, nil
 }
 
 // Fungsi untuk membuat tanda tangan
@@ -64,8 +86,12 @@ func main() {
 
 	privateKeyPath := "/files/rsa/private_key.pem"
 
-	clientID := "exampleClientID"
-	timestamp := "2024-12-09T10:00:00Z"
+	// clientID := "exampleClientID"
+	clientID := "jxbdevelopment"
+	// timestamp := "2024-12-23T04:04:00Z"
+	timestamp := "2024-12-23T16:18:52+07:00"
+	now := time.Now()
+	log.Println("now", now)
 	stringToSign := clientID + "|" + timestamp
 
 	app.Post("/auth-signature", func(c *fiber.Ctx) error {
@@ -80,6 +106,8 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to sign string:", err)
 		}
+
+		log.Println("signature :", signature)
 
 		// Kirim permintaan ke server
 		req, err := http.NewRequest("POST", "http://server:3000/verify", nil)

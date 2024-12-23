@@ -15,7 +15,58 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Fungsi untuk memuat public key dari file
+// // Fungsi untuk memuat public key dari file
+// func loadPublicKeyFromFile(filePath string) (*rsa.PublicKey, error) {
+// 	// Baca isi file public key
+// 	keyBytes, err := ioutil.ReadFile(filePath)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to read public key file at %s: %w", filePath, err)
+// 	}
+
+// 	// Decode public key dari format PEM
+// 	block, _ := pem.Decode(keyBytes)
+// 	if block == nil || block.Type != "PUBLIC KEY" {
+// 		return nil, errors.New("invalid public key PEM format")
+// 	}
+
+// 	// Parse public key ke objek RSA
+// 	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to parse public key: %w", err)
+// 	}
+
+// 	// Pastikan kunci adalah tipe RSA
+// 	rsaKey, ok := publicKey.(*rsa.PublicKey)
+// 	if !ok {
+// 		return nil, errors.New("not an RSA public key")
+// 	}
+
+// 	return rsaKey, nil
+// }
+
+// // Fungsi untuk memverifikasi tanda tangan digital
+// func verifySignature(publicKey *rsa.PublicKey, stringToSign, signatureBase64 string) bool {
+// 	// Decode signature dari base64
+// 	signature, err := base64.StdEncoding.DecodeString(signatureBase64)
+// 	if err != nil {
+// 		log.Println("Failed to decode signature:", err)
+// 		return false
+// 	}
+
+// 	// Buat hash dari stringToSign
+// 	hash := sha256.New()
+// 	hash.Write([]byte(stringToSign))
+// 	digest := hash.Sum(nil)
+
+// 	// Verifikasi tanda tangan
+// 	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, digest, signature)
+// 	if err != nil {
+// 		log.Println("Verification failed:", err)
+// 		return false
+// 	}
+// 	return true
+// }
+
 func loadPublicKeyFromFile(filePath string) (*rsa.PublicKey, error) {
 	// Baca isi file public key
 	keyBytes, err := ioutil.ReadFile(filePath)
@@ -26,7 +77,7 @@ func loadPublicKeyFromFile(filePath string) (*rsa.PublicKey, error) {
 	// Decode public key dari format PEM
 	block, _ := pem.Decode(keyBytes)
 	if block == nil || block.Type != "PUBLIC KEY" {
-		return nil, errors.New("invalid public key PEM format")
+		return nil, errors.New("invalid RSA public key PEM format")
 	}
 
 	// Parse public key ke objek RSA
@@ -44,27 +95,25 @@ func loadPublicKeyFromFile(filePath string) (*rsa.PublicKey, error) {
 	return rsaKey, nil
 }
 
-// Fungsi untuk memverifikasi tanda tangan digital
-func verifySignature(publicKey *rsa.PublicKey, stringToSign, signatureBase64 string) bool {
-	// Decode signature dari base64
+func verifySignature(publicKey *rsa.PublicKey, stringToVerify, signatureBase64 string) error {
+	// Decode tanda tangan dari Base64
 	signature, err := base64.StdEncoding.DecodeString(signatureBase64)
 	if err != nil {
-		log.Println("Failed to decode signature:", err)
-		return false
+		return fmt.Errorf("failed to decode signature: %w", err)
 	}
 
-	// Buat hash dari stringToSign
+	// Hash stringToVerify menggunakan SHA256
 	hash := sha256.New()
-	hash.Write([]byte(stringToSign))
+	hash.Write([]byte(stringToVerify))
 	digest := hash.Sum(nil)
 
-	// Verifikasi tanda tangan
+	// Verifikasi tanda tangan menggunakan public key
 	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, digest, signature)
 	if err != nil {
-		log.Println("Verification failed:", err)
-		return false
+		return fmt.Errorf("signature verification failed: %w", err)
 	}
-	return true
+
+	return nil
 }
 
 func main() {
@@ -90,7 +139,8 @@ func main() {
 		}
 
 		// Verifikasi tanda tangan
-		if verifySignature(publicKey, stringToSign, signature) {
+		errVerify := verifySignature(publicKey, stringToSign, signature)
+		if errVerify != nil {
 			return c.Status(fiber.StatusOK).JSON(fiber.Map{
 				"status":         "success",
 				"message":        "Signature is valid!",
