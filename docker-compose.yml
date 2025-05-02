@@ -37,8 +37,8 @@ services:
       - goroot_client:/go
       - gocache_client:/.cache/go-build
       - ./client:/project
-      # - ./rsa-private-public-key/private_key.pem:/files/rsa/private_key.pem:ro
-      - ./rsa-private-public-key/rsa-private-bank-dki.pem:/files/rsa/private_key.pem:ro
+      - ./rsa-private-public-key/private_key.pem:/files/rsa/private_key.pem:ro
+      # - ./rsa-private-public-key/rsa-private-bank-dki.pem:/files/rsa/private_key.pem:ro
     ports:
       - 3001:3001
     command:
